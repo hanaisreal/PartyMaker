@@ -83,4 +83,127 @@ function joinWaitlist() {
             });
         });
 
+        // Auto-slide mockup images on hover
+        (function initMockupSliders() {
+            const items = document.querySelectorAll('.mockup-item[data-images]');
+            const intervalMs = 2600;
+
+            // Observe viewport to start/stop for performance and stagger start times
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const item = entry.target;
+                    const state = item.__sliderState;
+                    if (!state) return;
+                    if (entry.isIntersecting) {
+                        if (!state.timer) {
+                            state.timer = setInterval(state.nextImage, intervalMs);
+                        }
+                    } else {
+                        if (state.timer) {
+                            clearInterval(state.timer);
+                            state.timer = null;
+                        }
+                    }
+                });
+            }, { threshold: 0.2 });
+
+            items.forEach((item, idx) => {
+                const imgEl = item.querySelector('.mockup-image img');
+                const blurEl = document.createElement('div');
+                blurEl.className = 'mockup-blur';
+                const imageWrap = item.querySelector('.mockup-image');
+                if (imageWrap && !imageWrap.querySelector('.mockup-blur')) {
+                    imageWrap.prepend(blurEl);
+                }
+
+                const list = item.getAttribute('data-images').split(',').map(s => s.trim()).filter(Boolean);
+                if (!imgEl || list.length < 2) return;
+
+                let index = 0;
+                let timer = null;
+                function renderBlur(src) { if (blurEl) blurEl.style.backgroundImage = `url('${src}')`; }
+
+                function nextImage() {
+                    const nextIdx = (index + 1) % list.length;
+                    const nextSrc = list[nextIdx];
+                    imgEl.classList.remove('slide-enter','slide-enter-active');
+                    imgEl.classList.add('slide-exit');
+                    requestAnimationFrame(() => {
+                        imgEl.classList.add('slide-exit-active');
+                    });
+                    setTimeout(() => {
+                        imgEl.src = nextSrc;
+                        renderBlur(nextSrc);
+                        imgEl.classList.remove('slide-exit','slide-exit-active');
+                        imgEl.classList.add('slide-enter');
+                        requestAnimationFrame(() => {
+                            imgEl.classList.add('slide-enter-active');
+                        });
+                        index = nextIdx;
+                    }, 250);
+                }
+
+                // store state on element
+                item.__sliderState = { timer, nextImage };
+
+                // initial blur background
+                renderBlur(imgEl.src);
+
+                // slight stagger so not all move at once
+                setTimeout(() => {
+                    observer.observe(item);
+                }, idx * 350);
+
+                // click to open modal gallery
+                item.addEventListener('click', () => openGallery(item));
+            });
+
+            // Modal gallery logic
+            const overlay = document.getElementById('galleryModal');
+            const closeBtn = document.getElementById('galleryClose');
+            const imgEl = document.getElementById('modalImage');
+            const blurEl = document.getElementById('modalBlur');
+            const prevBtn = document.getElementById('modalPrev');
+            const nextBtn = document.getElementById('modalNext');
+            let currentList = [];
+            let currentIndex = 0;
+
+            function renderModal() {
+                const src = currentList[currentIndex];
+                imgEl.src = src;
+                blurEl.style.backgroundImage = `url('${src}')`;
+            }
+
+            function openGallery(item) {
+                const list = item.getAttribute('data-images');
+                if (!list) return;
+                currentList = list.split(',').map(s => s.trim()).filter(Boolean);
+                currentIndex = 0;
+                renderModal();
+                overlay.classList.add('open');
+                overlay.setAttribute('aria-hidden','false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeGallery() {
+                overlay.classList.remove('open');
+                overlay.setAttribute('aria-hidden','true');
+                document.body.style.overflow = '';
+            }
+
+            function next() { currentIndex = (currentIndex + 1) % currentList.length; renderModal(); }
+            function prev() { currentIndex = (currentIndex - 1 + currentList.length) % currentList.length; renderModal(); }
+
+            closeBtn.addEventListener('click', closeGallery);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGallery(); });
+            nextBtn.addEventListener('click', next);
+            prevBtn.addEventListener('click', prev);
+            window.addEventListener('keydown', (e) => {
+                if (!overlay.classList.contains('open')) return;
+                if (e.key === 'Escape') closeGallery();
+                if (e.key === 'ArrowRight') next();
+                if (e.key === 'ArrowLeft') prev();
+            });
+        })();
+
 
