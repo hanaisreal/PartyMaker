@@ -95,24 +95,28 @@ function joinWaitlist() {
         function initMockupSliders() {
             const items = document.querySelectorAll('.mockup-item[data-images]');
             const intervalMs = 2600;
+            let globalTimer = null;
+            const itemStates = [];
 
-            // Observe viewport to start/stop for performance and stagger start times
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const item = entry.target;
-                    const state = item.__sliderState;
-                    if (!state) return;
-                    if (entry.isIntersecting) {
-                        if (!state.timer) {
-                            state.timer = setInterval(state.nextImage, intervalMs);
-                        }
-                    } else {
-                        if (state.timer) {
-                            clearInterval(state.timer);
-                            state.timer = null;
-                        }
+            // Global function to advance all items simultaneously
+            function advanceAllItems() {
+                itemStates.forEach(state => {
+                    if (state && state.nextImage) {
+                        state.nextImage();
                     }
                 });
+            }
+
+            // Observe viewport to start/stop global timer
+            const observer = new IntersectionObserver((entries) => {
+                const anyVisible = entries.some(entry => entry.isIntersecting);
+
+                if (anyVisible && !globalTimer) {
+                    globalTimer = setInterval(advanceAllItems, intervalMs);
+                } else if (!anyVisible && globalTimer) {
+                    clearInterval(globalTimer);
+                    globalTimer = null;
+                }
             }, { threshold: 0.2 });
 
             items.forEach((item, idx) => {
@@ -128,7 +132,6 @@ function joinWaitlist() {
                 if (!imgEl || list.length < 2) return;
 
                 let index = 0;
-                let timer = null;
                 function renderBlur(src) { if (blurEl) blurEl.style.backgroundImage = `url('${src}')`; }
 
                 function nextImage() {
@@ -151,16 +154,15 @@ function joinWaitlist() {
                     }, 250);
                 }
 
-                // store state on element
-                item.__sliderState = { timer, nextImage };
+                // store state for global timer
+                const state = { nextImage };
+                itemStates.push(state);
 
                 // initial blur background
                 renderBlur(imgEl.src);
 
-                // slight stagger so not all move at once
-                setTimeout(() => {
-                    observer.observe(item);
-                }, idx * 350);
+                // observe each item for visibility
+                observer.observe(item);
 
                 // click to open modal gallery
                 item.addEventListener('click', () => openGallery(item));
