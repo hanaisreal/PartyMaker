@@ -43,11 +43,19 @@ function joinWaitlist() {
             const isOpen = answer.style.display === 'block';
             
             // Close all FAQs
-            document.querySelectorAll('.faq-answer').forEach(a => a.style.display = 'none');
-            document.querySelectorAll('.faq-question span').forEach(s => s.textContent = '+');
+            document.querySelectorAll('.faq-answer').forEach(a => {
+                a.style.display = 'none';
+                a.setAttribute('aria-hidden', 'true');
+            });
+            document.querySelectorAll('.faq-question').forEach(q => {
+                q.setAttribute('aria-expanded', 'false');
+                q.querySelector('span').textContent = '+';
+            });
             
             if (!isOpen) {
                 answer.style.display = 'block';
+                answer.setAttribute('aria-hidden', 'false');
+                element.setAttribute('aria-expanded', 'true');
                 element.querySelector('span').textContent = '−';
             }
         }
@@ -83,8 +91,8 @@ function joinWaitlist() {
             });
         });
 
-        // Auto-slide mockup images on hover
-        (function initMockupSliders() {
+        // Auto-slide mockup images on hover and modal gallery
+        function initMockupSliders() {
             const items = document.querySelectorAll('.mockup-item[data-images]');
             const intervalMs = 2600;
 
@@ -156,15 +164,30 @@ function joinWaitlist() {
 
                 // click to open modal gallery
                 item.addEventListener('click', () => openGallery(item));
+                
+                // keyboard navigation support
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openGallery(item);
+                    }
+                });
             });
 
-            // Modal gallery logic
+            // Modal gallery logic - ensure DOM is ready
             const overlay = document.getElementById('galleryModal');
             const closeBtn = document.getElementById('galleryClose');
             const imgEl = document.getElementById('modalImage');
             const blurEl = document.getElementById('modalBlur');
             const prevBtn = document.getElementById('modalPrev');
             const nextBtn = document.getElementById('modalNext');
+            
+            // Check if modal elements exist
+            if (!overlay || !closeBtn || !imgEl || !blurEl || !prevBtn || !nextBtn) {
+                console.warn('Modal gallery elements not found');
+                return;
+            }
+            
             let currentList = [];
             let currentIndex = 0;
 
@@ -194,8 +217,26 @@ function joinWaitlist() {
             function next() { currentIndex = (currentIndex + 1) % currentList.length; renderModal(); }
             function prev() { currentIndex = (currentIndex - 1 + currentList.length) % currentList.length; renderModal(); }
 
-            closeBtn.addEventListener('click', closeGallery);
-            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGallery(); });
+            // Enhanced close button event handling
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Close button clicked');
+                closeGallery();
+            });
+            
+            // Also handle mousedown for better responsiveness
+            closeBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            overlay.addEventListener('click', (e) => { 
+                if (e.target === overlay) {
+                    console.log('Overlay clicked');
+                    closeGallery(); 
+                }
+            });
             nextBtn.addEventListener('click', next);
             prevBtn.addEventListener('click', prev);
             window.addEventListener('keydown', (e) => {
@@ -204,6 +245,13 @@ function joinWaitlist() {
                 if (e.key === 'ArrowRight') next();
                 if (e.key === 'ArrowLeft') prev();
             });
-        })();
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMockupSliders);
+        } else {
+            initMockupSliders();
+        }
 
 

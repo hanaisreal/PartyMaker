@@ -494,6 +494,105 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(255, 107, 157, 0.5);
         }
+
+        /* Modal gallery styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 3px solid #ffe1ea;
+            box-shadow: 0 30px 80px rgba(255, 107, 157, 0.25);
+            max-width: 900px;
+            width: 100%;
+            color: #2d3748;
+            position: relative;
+            overflow: hidden;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 2px dashed #ffccd9;
+            position: relative;
+            z-index: 10;
+        }
+        .modal-title { font-weight: 800; font-size: 18px; color: #2d3748; }
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #c44569;
+            font-size: 22px;
+            cursor: pointer;
+            width: 36px; height: 36px; line-height: 1;
+            border-radius: 999px;
+            position: relative;
+            z-index: 11;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .modal-close:hover { 
+            background: rgba(255, 107, 157, 0.08); 
+        }
+        .modal-close:active {
+            background: rgba(255, 107, 157, 0.15);
+        }
+        .modal-close:focus {
+            outline: 2px solid rgba(255, 107, 157, 0.5);
+            outline-offset: 2px;
+        }
+        .modal-body {
+            position: relative;
+            background: linear-gradient(135deg, #fef7ed 0%, #fff 100%);
+        }
+        .modal-body .modal-blur {
+            position: absolute; inset: 0;
+            background-size: cover; background-position: center;
+            filter: blur(24px); transform: scale(1.15); opacity: 0.22;
+        }
+        .modal-image {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            min-height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-image img { max-width: 100%; max-height: 100%; object-fit: contain; position: relative; z-index: 1; }
+        .modal-nav {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; z-index: 2; pointer-events: none;
+        }
+        .modal-btn {
+            pointer-events: auto;
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            border: none;
+            color: #fff;
+            width: 44px; height: 44px; border-radius: 999px;
+            display: grid; place-items: center;
+            margin: 0 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 107, 157, 0.35);
+            transition: transform .15s ease, box-shadow .2s ease;
+        }
+        .modal-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 35px rgba(255, 107, 157, 0.5); }
         .pricing {
             padding: 70px 0;
             background: #f7fafc;
@@ -782,7 +881,7 @@
             <p class="mockups-subtitle">Real examples of what your custom party pack will look like</p>
             
             <div class="mockup-grid">
-                <div class="mockup-item">
+                <div class="mockup-item" data-images="https://via.placeholder.com/400x300/ff6b9d/white?text=Custom+Birthday+Banner,https://via.placeholder.com/400x300/c44569/white?text=Custom+Birthday+Banner+2">
                     <div class="mockup-image">
                         <img src="https://via.placeholder.com/400x300/ff6b9d/white?text=Custom+Birthday+Banner" alt="Custom Birthday Banner Example" loading="lazy">
                     </div>
@@ -792,7 +891,7 @@
                     </div>
                 </div>
                 
-                <div class="mockup-item">
+                <div class="mockup-item" data-images="https://via.placeholder.com/400x300/667eea/white?text=Party+Invitations,https://via.placeholder.com/400x300/764ba2/white?text=Party+Invitations+2">
                     <div class="mockup-image">
                         <img src="https://via.placeholder.com/400x300/667eea/white?text=Party+Invitations" alt="Custom Party Invitations" loading="lazy">
                     </div>
@@ -802,7 +901,7 @@
                     </div>
                 </div>
                 
-                <div class="mockup-item">
+                <div class="mockup-item" data-images="https://via.placeholder.com/400x300/ffeaa7/333?text=Cupcake+Toppers,https://via.placeholder.com/400x300/fab1a0/333?text=Cupcake+Toppers+2">
                     <div class="mockup-image">
                         <img src="https://via.placeholder.com/400x300/ffeaa7/333?text=Cupcake+Toppers" alt="Custom Cupcake Toppers" loading="lazy">
                     </div>
@@ -812,7 +911,7 @@
                     </div>
                 </div>
                 
-                <div class="mockup-item">
+                <div class="mockup-item" data-images="https://via.placeholder.com/400x300/fab1a0/white?text=Complete+Party+Setup,https://via.placeholder.com/400x300/ffeaa7/white?text=Complete+Party+Setup+2">
                     <div class="mockup-image">
                         <img src="https://via.placeholder.com/400x300/fab1a0/white?text=Complete+Party+Setup" alt="Complete Party Setup" loading="lazy">
                     </div>
@@ -956,6 +1055,26 @@
         </div>
     </section>
 
+    <!-- Modal Gallery -->
+    <div class="modal-overlay" id="galleryModal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
+            <div class="modal-header">
+                <div class="modal-title" id="galleryTitle">Preview</div>
+                <button class="modal-close" id="galleryClose" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-blur" id="modalBlur"></div>
+                <div class="modal-image">
+                    <img id="modalImage" alt="Preview">
+                    <div class="modal-nav">
+                        <button class="modal-btn" id="modalPrev" aria-label="Previous">‹</button>
+                        <button class="modal-btn" id="modalNext" aria-label="Next">›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function joinWaitlist() {
             const email = document.getElementById('waitlistEmail').value;
@@ -1041,3 +1160,99 @@
                 }
             });
         });
+
+        // Modal gallery functionality
+        function initModalGallery() {
+            const items = document.querySelectorAll('.mockup-item[data-images]');
+            const overlay = document.getElementById('galleryModal');
+            const closeBtn = document.getElementById('galleryClose');
+            const imgEl = document.getElementById('modalImage');
+            const blurEl = document.getElementById('modalBlur');
+            const prevBtn = document.getElementById('modalPrev');
+            const nextBtn = document.getElementById('modalNext');
+            
+            // Check if modal elements exist
+            if (!overlay || !closeBtn || !imgEl || !blurEl || !prevBtn || !nextBtn) {
+                console.warn('Modal gallery elements not found');
+                return;
+            }
+            
+            let currentList = [];
+            let currentIndex = 0;
+
+            function renderModal() {
+                const src = currentList[currentIndex];
+                imgEl.src = src;
+                blurEl.style.backgroundImage = `url('${src}')`;
+            }
+
+            function openGallery(item) {
+                const list = item.getAttribute('data-images');
+                if (!list) return;
+                currentList = list.split(',').map(s => s.trim()).filter(Boolean);
+                currentIndex = 0;
+                renderModal();
+                overlay.classList.add('open');
+                overlay.setAttribute('aria-hidden','false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeGallery() {
+                overlay.classList.remove('open');
+                overlay.setAttribute('aria-hidden','true');
+                document.body.style.overflow = '';
+            }
+
+            function next() { 
+                currentIndex = (currentIndex + 1) % currentList.length; 
+                renderModal(); 
+            }
+            
+            function prev() { 
+                currentIndex = (currentIndex - 1 + currentList.length) % currentList.length; 
+                renderModal(); 
+            }
+
+            // Add click handlers to mockup items
+            items.forEach(item => {
+                item.addEventListener('click', () => openGallery(item));
+            });
+
+            // Enhanced modal event listeners
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Close button clicked');
+                closeGallery();
+            });
+            
+            // Also handle mousedown for better responsiveness
+            closeBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            overlay.addEventListener('click', (e) => { 
+                if (e.target === overlay) {
+                    console.log('Overlay clicked');
+                    closeGallery(); 
+                }
+            });
+            nextBtn.addEventListener('click', next);
+            prevBtn.addEventListener('click', prev);
+            
+            // Keyboard navigation
+            window.addEventListener('keydown', (e) => {
+                if (!overlay.classList.contains('open')) return;
+                if (e.key === 'Escape') closeGallery();
+                if (e.key === 'ArrowRight') next();
+                if (e.key === 'ArrowLeft') prev();
+            });
+        }
+        
+        // Initialize modal gallery when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initModalGallery);
+        } else {
+            initModalGallery();
+        }
