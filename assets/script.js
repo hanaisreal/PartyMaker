@@ -256,4 +256,150 @@ function joinWaitlist() {
             initMockupSliders();
         }
 
+        // Before/After Slider Functionality
+        function initBeforeAfterSlider() {
+            const slider = document.getElementById('beforeAfterSlider');
+            const sliderControl = document.getElementById('sliderControl');
+            const beforeImage = document.querySelector('.before-image');
+            const afterImage = document.querySelector('.after-image');
+
+            if (!slider || !sliderControl || !beforeImage || !afterImage) {
+                console.warn('Before/after slider elements not found');
+                return;
+            }
+
+            let isActive = false;
+            let currentPosition = 50; // Start at 50% (middle)
+
+            // Update slider position
+            function updateSlider(percentage) {
+                const clampedPercentage = Math.max(0, Math.min(100, percentage));
+                currentPosition = clampedPercentage;
+
+                // Update clip paths
+                beforeImage.style.clipPath = `inset(0 ${100 - clampedPercentage}% 0 0)`;
+                afterImage.style.clipPath = `inset(0 0 0 ${clampedPercentage}%)`;
+
+                // Update slider control position
+                sliderControl.style.left = `${clampedPercentage}%`;
+            }
+
+            // Get mouse/touch position as percentage
+            function getPositionPercentage(event) {
+                const rect = slider.getBoundingClientRect();
+                const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+                const position = ((clientX - rect.left) / rect.width) * 100;
+                return position;
+            }
+
+            // Mouse events
+            function handleMouseDown(event) {
+                event.preventDefault();
+                isActive = true;
+                slider.style.cursor = 'grabbing';
+                updateSlider(getPositionPercentage(event));
+            }
+
+            function handleMouseMove(event) {
+                if (!isActive) return;
+                event.preventDefault();
+                updateSlider(getPositionPercentage(event));
+            }
+
+            function handleMouseUp() {
+                isActive = false;
+                slider.style.cursor = 'grab';
+            }
+
+            // Touch events
+            function handleTouchStart(event) {
+                event.preventDefault();
+                isActive = true;
+                updateSlider(getPositionPercentage(event));
+            }
+
+            function handleTouchMove(event) {
+                if (!isActive) return;
+                event.preventDefault();
+                updateSlider(getPositionPercentage(event));
+            }
+
+            function handleTouchEnd() {
+                isActive = false;
+            }
+
+            // Add event listeners
+            sliderControl.addEventListener('mousedown', handleMouseDown);
+            slider.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+
+            // Touch support
+            sliderControl.addEventListener('touchstart', handleTouchStart, { passive: false });
+            slider.addEventListener('touchstart', handleTouchStart, { passive: false });
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+
+            // Keyboard accessibility
+            sliderControl.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    updateSlider(currentPosition - 5);
+                } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    updateSlider(currentPosition + 5);
+                }
+            });
+
+            // Auto-animation on load (optional)
+            function animateSlider() {
+                let progress = 0;
+                const duration = 3000; // 3 seconds
+                const startTime = Date.now();
+
+                function animate() {
+                    const elapsed = Date.now() - startTime;
+                    progress = Math.min(elapsed / duration, 1);
+
+                    // Easing function for smooth animation
+                    const easeInOut = t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                    const easedProgress = easeInOut(progress);
+
+                    // Animate from 0% to 100% and back to 50%
+                    let position;
+                    if (easedProgress < 0.5) {
+                        position = easedProgress * 200; // 0 to 100
+                    } else {
+                        position = 100 - ((easedProgress - 0.5) * 100); // 100 to 50
+                    }
+
+                    updateSlider(position);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                }
+
+                // Start animation after a brief delay
+                setTimeout(() => {
+                    animate();
+                }, 1000);
+            }
+
+            // Initialize slider
+            updateSlider(currentPosition);
+
+            // Start auto-animation on page load
+            if (window.innerWidth > 768) { // Only on desktop
+                animateSlider();
+            }
+        }
+
+        // Initialize slider when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initBeforeAfterSlider);
+        } else {
+            initBeforeAfterSlider();
+        }
+
 

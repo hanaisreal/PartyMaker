@@ -95,9 +95,6 @@
     <link rel="stylesheet" href="./assets/styles.css?v=1.1">
 </head>
 <body>
-    <!-- Skip to main content link for accessibility -->
-    <a href="#hero-title" class="skip-link">Skip to main content</a>
-    
     <!-- Header -->
     <header class="header" role="banner">
         <div class="container">
@@ -112,9 +109,33 @@
     <main>
         <section class="hero" role="main" aria-labelledby="hero-title">
             <div class="container">
-                <h1 id="hero-title">Transform Your Child's Birthday Into Pure Magic ✨</h1>
-                <p class="subtitle">Upload their favorite photo, choose from 20+ enchanting themes, and watch their face light up with joy when they see themselves as the star of their own magical party!</p>
-                <a href="#waitlist" class="hero-cta" aria-label="Get early access to PartyMaker">Get Early Access</a>
+                <div class="hero-content">
+                    <h1 id="hero-title">Transform Your Child's Birthday Into Pure Magic</h1>
+                    <p class="subtitle">Upload their favorite photo, choose from 20+ enchanting themes, and watch their face light up with joy when they see themselves as the star of their own magical party.</p>
+                    <a href="#waitlist" class="hero-cta" aria-label="Get early access to PartyMaker">
+                        <span>Get Early Access</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 17L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M7 7H17V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Floating Preview Cards -->
+                <div class="hero-preview-cards">
+                    <div class="preview-card card-1">
+                        <img src="./pictures/banner1.png" alt="Custom birthday banner preview" loading="eager">
+                        <div class="card-label">Custom Banners</div>
+                    </div>
+                    <div class="preview-card card-2">
+                        <img src="./pictures/invitation1.png" alt="Party invitation preview" loading="eager">
+                        <div class="card-label">Invitations</div>
+                    </div>
+                    <div class="preview-card card-3">
+                        <img src="./pictures/cupcake_topper1.png" alt="Cupcake toppers preview" loading="eager">
+                        <div class="card-label">Cupcake Toppers</div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -125,18 +146,18 @@
                 <div class="steps" role="list" aria-label="Three-step process to create custom party decorations">
                     <article class="step" role="listitem">
                         <div class="step-number" aria-label="Step 1">1</div>
-                        <h3>📸 Upload & Pick</h3>
-                        <p>Share your child's most adorable photo and select from our magical collection: princess castles, superhero adventures, unicorn dreams, dinosaur kingdoms, space missions, and 15+ more enchanting themes!</p>
+                        <h3>Upload & Pick</h3>
+                        <p>Share your child's most adorable photo and select from our magical collection: princess castles, superhero adventures, unicorn dreams, dinosaur kingdoms, space missions, and 15+ more enchanting themes.</p>
                     </article>
                     <article class="step" role="listitem">
                         <div class="step-number" aria-label="Step 2">2</div>
-                        <h3>✨ We Work Magic</h3>
-                        <p>Our talented designers work their magic, transforming your child's photo into stunning custom artwork. Every banner, invitation, and decoration is perfectly crafted to make your little one the absolute star of their special day!</p>
+                        <h3>We Work Magic</h3>
+                        <p>Our talented designers work their magic, transforming your child's photo into stunning custom artwork. Every banner, invitation, and decoration is perfectly crafted to make your little one the absolute star of their special day.</p>
                     </article>
                     <article class="step" role="listitem">
                         <div class="step-number" aria-label="Step 3">3</div>
-                        <h3>🎉 Print & Celebrate</h3>
-                        <p>Receive your magical files instantly via email! Print beautifully at home or get professional quality at any print shop. Quick 15-minute setup creates memories that will last a lifetime!</p>
+                        <h3>Print & Celebrate</h3>
+                        <p>Receive your magical files instantly via email. Print beautifully at home or get professional quality at any print shop. Quick 15-minute setup creates memories that will last a lifetime.</p>
                     </article>
                 </div>
             </div>
@@ -203,9 +224,6 @@
                 <h2 class="section-title">What Atlanta Parents Are Saying</h2>
                 <div class="reviews-grid">
                     <div class="review-item">
-                        <div class="party-image">
-                            <img src="https://via.placeholder.com/350x200/ff6b9d/white?text=Princess+Birthday+Party+Setup" alt="Princess party setup" loading="lazy">
-                        </div>
                         <div class="review-content">
                             <div class="review-header">
                                 <div class="reviewer-info">
@@ -220,9 +238,6 @@
                     </div>
 
                     <div class="review-item">
-                        <div class="party-image">
-                            <img src="https://via.placeholder.com/350x200/667eea/white?text=Superhero+Birthday+Party+Scene" alt="Superhero party setup" loading="lazy">
-                        </div>
                         <div class="review-content">
                             <div class="review-header">
                                 <div class="reviewer-info">
@@ -237,9 +252,6 @@
                     </div>
 
                     <div class="review-item">
-                        <div class="party-image">
-                            <img src="https://via.placeholder.com/350x200/ffeaa7/333?text=Unicorn+Birthday+Party+Decorations" alt="Unicorn party decorations" loading="lazy">
-                        </div>
                         <div class="review-content">
                             <div class="review-header">
                                 <div class="reviewer-info">
@@ -260,7 +272,7 @@
         <section class="waitlist" id="waitlist" aria-labelledby="waitlist-title">
             <div class="container">
                 <div class="waitlist-content">
-                    <h2 id="waitlist-title">Get Ready for Birthday Magic! 🎂✨</h2>
+                    <h2 id="waitlist-title">Get Ready for Birthday Magic</h2>
                     <p class="waitlist-subtitle">PartyMaker launches January 2025! Join 800+ amazing Atlanta parents who are already creating unforgettable birthday memories. Early access members save 40% off regular prices!</p>
                     
                     <div class="waitlist-form">
