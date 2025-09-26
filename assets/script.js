@@ -24,11 +24,23 @@ function joinWaitlist() {
                 button.textContent = 'Save My Spot!';
                 button.disabled = false;
                 
-                // Track signup
+                // Mark form as submitted to prevent abandonment tracking
+                document.querySelector('form[name="waitlist"]').dataset.submitted = 'true';
+
+                // Track signup with enhanced data
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'waitlist_signup', {
                         'event_category': 'Lead',
-                        'event_label': 'Waitlist Join'
+                        'event_label': 'Waitlist Join',
+                        'email_domain': email.split('@')[1],
+                        'counter_value': currentCount + 1
+                    });
+
+                    // Also track as conversion
+                    gtag('event', 'conversion', {
+                        'send_to': 'G-4CN4V4DRTL',
+                        'event_category': 'Lead',
+                        'event_label': 'Waitlist Signup Complete'
                     });
                 }
                 
@@ -41,7 +53,17 @@ function joinWaitlist() {
         function toggleFAQ(element) {
             const answer = element.nextElementSibling;
             const isOpen = answer.style.display === 'block';
-            
+            const faqText = element.textContent.replace('+', '').replace('−', '').trim();
+
+            // Track FAQ interaction
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'faq_interaction', {
+                    'event_category': 'Engagement',
+                    'event_label': faqText,
+                    'action': isOpen ? 'close' : 'open'
+                });
+            }
+
             // Close all FAQs
             document.querySelectorAll('.faq-answer').forEach(a => {
                 a.style.display = 'none';
@@ -51,7 +73,7 @@ function joinWaitlist() {
                 q.setAttribute('aria-expanded', 'false');
                 q.querySelector('span').textContent = '+';
             });
-            
+
             if (!isOpen) {
                 answer.style.display = 'block';
                 answer.setAttribute('aria-hidden', 'false');
@@ -544,6 +566,201 @@ function joinWaitlist() {
             document.addEventListener('DOMContentLoaded', initScrollAnimations);
         } else {
             initScrollAnimations();
+        }
+
+        // Enhanced User Behavior Tracking
+        function initEnhancedTracking() {
+            if (typeof gtag === 'undefined') return;
+
+            // Track CTA button clicks
+            document.querySelectorAll('.hero-cta, .nav-cta, .waitlist-button, .mockup-button, .footer-cta-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const buttonText = this.textContent.trim();
+                    const section = this.closest('section')?.className || 'unknown';
+
+                    gtag('event', 'cta_click', {
+                        'event_category': 'Conversion',
+                        'event_label': buttonText,
+                        'section': section
+                    });
+                });
+            });
+
+            // Track navigation clicks
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', function() {
+                    const targetSection = this.getAttribute('href').replace('#', '');
+
+                    gtag('event', 'navigation_click', {
+                        'event_category': 'Navigation',
+                        'event_label': targetSection,
+                        'link_text': this.textContent.trim()
+                    });
+                });
+            });
+
+            // Track form interactions
+            const emailInput = document.getElementById('waitlistEmail');
+            if (emailInput) {
+                let hasInteracted = false;
+
+                emailInput.addEventListener('focus', function() {
+                    if (!hasInteracted) {
+                        gtag('event', 'form_start', {
+                            'event_category': 'Lead',
+                            'event_label': 'Email Input Focus'
+                        });
+                        hasInteracted = true;
+                    }
+                });
+
+                emailInput.addEventListener('input', function() {
+                    if (this.value.length === 1) { // First character typed
+                        gtag('event', 'form_interact', {
+                            'event_category': 'Lead',
+                            'event_label': 'Email Typing Started'
+                        });
+                    }
+                });
+
+                // Track form abandonment (if user leaves without submitting)
+                let formStarted = false;
+                emailInput.addEventListener('focus', () => formStarted = true);
+
+                window.addEventListener('beforeunload', function() {
+                    if (formStarted && emailInput.value.length > 0 && !emailInput.closest('form').dataset.submitted) {
+                        gtag('event', 'form_abandon', {
+                            'event_category': 'Lead',
+                            'event_label': 'Email Form Abandoned',
+                            'value': emailInput.value.length
+                        });
+                    }
+                });
+            }
+
+            // Track modal gallery interactions
+            const modal = document.getElementById('galleryModal');
+            if (modal) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            if (modal.classList.contains('open')) {
+                                gtag('event', 'gallery_open', {
+                                    'event_category': 'Engagement',
+                                    'event_label': 'Modal Gallery Opened'
+                                });
+                            }
+                        }
+                    });
+                });
+                observer.observe(modal, { attributes: true });
+
+                // Track modal navigation
+                document.getElementById('modalNext')?.addEventListener('click', () => {
+                    gtag('event', 'gallery_navigate', {
+                        'event_category': 'Engagement',
+                        'event_label': 'Next Image'
+                    });
+                });
+
+                document.getElementById('modalPrev')?.addEventListener('click', () => {
+                    gtag('event', 'gallery_navigate', {
+                        'event_category': 'Engagement',
+                        'event_label': 'Previous Image'
+                    });
+                });
+            }
+
+            // Track scroll depth
+            let scrollMilestones = [25, 50, 75, 90];
+            let trackedMilestones = new Set();
+
+            function trackScrollDepth() {
+                const scrollPercent = Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100);
+
+                scrollMilestones.forEach(milestone => {
+                    if (scrollPercent >= milestone && !trackedMilestones.has(milestone)) {
+                        trackedMilestones.add(milestone);
+                        gtag('event', 'scroll_depth', {
+                            'event_category': 'Engagement',
+                            'event_label': `${milestone}% Scrolled`,
+                            'value': milestone
+                        });
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', trackScrollDepth);
+
+            // Track time on page (sends after 30 seconds, 1 min, 2 min, 5 min)
+            const timePoints = [30, 60, 120, 300]; // seconds
+            timePoints.forEach(seconds => {
+                setTimeout(() => {
+                    gtag('event', 'time_on_page', {
+                        'event_category': 'Engagement',
+                        'event_label': `${seconds} seconds`,
+                        'value': seconds
+                    });
+                }, seconds * 1000);
+            });
+
+            // Track device and browser info
+            gtag('event', 'user_device', {
+                'event_category': 'Technical',
+                'event_label': window.innerWidth <= 768 ? 'Mobile' : 'Desktop',
+                'screen_resolution': `${screen.width}x${screen.height}`,
+                'viewport_size': `${window.innerWidth}x${window.innerHeight}`
+            });
+
+            // Track section views using Intersection Observer
+            const sections = document.querySelectorAll('section[class]');
+            const sectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                        const sectionName = entry.target.className.split(' ')[0] || entry.target.id || 'unknown';
+                        gtag('event', 'section_view', {
+                            'event_category': 'Engagement',
+                            'event_label': sectionName,
+                            'section_name': sectionName
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            sections.forEach(section => sectionObserver.observe(section));
+
+            // Track pricing section engagement
+            const priceCards = document.querySelectorAll('.price-card');
+            priceCards.forEach((card, index) => {
+                card.addEventListener('mouseenter', function() {
+                    const planName = this.querySelector('h3')?.textContent || `Plan ${index + 1}`;
+                    gtag('event', 'pricing_hover', {
+                        'event_category': 'Conversion',
+                        'event_label': planName
+                    });
+                });
+            });
+
+            // Track outbound links (if any)
+            document.querySelectorAll('a[href^="http"]').forEach(link => {
+                link.addEventListener('click', function() {
+                    const url = this.href;
+                    if (!url.includes(window.location.hostname)) {
+                        gtag('event', 'outbound_click', {
+                            'event_category': 'Navigation',
+                            'event_label': url,
+                            'transport_type': 'beacon'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Initialize enhanced tracking
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initEnhancedTracking);
+        } else {
+            initEnhancedTracking();
         }
 
 
