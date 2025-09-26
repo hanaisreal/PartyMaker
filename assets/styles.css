@@ -20,8 +20,8 @@
     --border-subtle: #E5E7EB;
 
     /* Typography */
-    --font-display: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
+    --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
 
     /* Spacing */
     --section-padding: 120px 0;
@@ -93,11 +93,49 @@ body {
 }
 
 .logo {
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-dark);
-    letter-spacing: -0.02em;
+    font-family: 'Fredoka', var(--font-display);
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    position: relative;
+    background: linear-gradient(135deg, #ff6b9d 0%, #667eea 50%, #ff6b9d 100%);
+    background-size: 200% 200%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: logoGradientShift 4s ease-in-out infinite;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+}
+
+.logo::after {
+    content: '🎈';
+    position: absolute;
+    top: -8px;
+    right: -20px;
+    font-size: 18px;
+    animation: logoFloatBounce 2.5s ease-in-out infinite;
+}
+
+@keyframes logoGradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes logoFloatBounce {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-3px) rotate(5deg);
+    }
+    75% {
+        transform: translateY(-1px) rotate(-3deg);
+    }
 }
 
 .nav-cta {
@@ -160,11 +198,63 @@ body {
 .hero h1 {
     font-family: var(--font-display);
     font-size: clamp(40px, 6vw, 72px);
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1.1;
-    color: var(--text-dark);
     margin-bottom: 32px;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
+    position: relative;
+    background: linear-gradient(135deg, var(--text-dark) 0%, var(--accent-purple) 30%, var(--accent-coral) 70%, var(--text-dark) 100%);
+    background-size: 300% 300%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeInWithGradient 1.2s ease-out 0.3s forwards, heroGradientShift 6s ease-in-out 1.5s infinite;
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+@keyframes fadeInWithGradient {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes heroGradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    25% {
+        background-position: 100% 0%;
+    }
+    50% {
+        background-position: 100% 100%;
+    }
+    75% {
+        background-position: 0% 100%;
+    }
+}
+
+/* Add sparkle effect for extra party magic */
+.hero h1::after {
+    content: '✨';
+    position: absolute;
+    top: -10px;
+    right: -30px;
+    font-size: 32px;
+    animation: sparkleFloat 3s ease-in-out infinite;
+    opacity: 0.8;
+}
+
+@keyframes sparkleFloat {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-15px) rotate(180deg);
+        opacity: 1;
+    }
 }
 
 .hero .subtitle {
@@ -293,12 +383,35 @@ body {
 .section-title {
     font-family: var(--font-display);
     font-size: clamp(36px, 6vw, 64px);
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-dark);
     text-align: center;
     margin-bottom: 80px;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-title.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Special party-themed text effects */
+.section-title {
+    background: linear-gradient(135deg, var(--text-dark) 0%, var(--accent-purple) 50%, var(--accent-coral) 100%);
+    background-size: 200% 200%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 4s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 /* How It Works */
@@ -1158,7 +1271,12 @@ body {
     }
 
     .logo {
-        font-size: 24px;
+        font-size: 28px;
+    }
+
+    .logo::after {
+        font-size: 16px;
+        right: -18px;
     }
 }
 

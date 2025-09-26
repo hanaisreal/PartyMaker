@@ -402,4 +402,54 @@ function joinWaitlist() {
             initBeforeAfterSlider();
         }
 
+        // Scroll-triggered animations for headings
+        function initScrollAnimations() {
+            const titles = document.querySelectorAll('.section-title');
+
+            // Intersection Observer for scroll animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                    }
+                });
+            }, {
+                threshold: 0.2,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            titles.forEach(title => {
+                observer.observe(title);
+            });
+
+            // Add stagger animation to other elements
+            const animatedElements = document.querySelectorAll('.step, .mockup-item, .review-item, .price-card');
+
+            const elementObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
+                            entry.target.style.opacity = '1';
+                        }, index * 100);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -30px 0px'
+            });
+
+            animatedElements.forEach(element => {
+                element.style.opacity = '0';
+                elementObserver.observe(element);
+            });
+        }
+
+        // Initialize scroll animations
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initScrollAnimations);
+        } else {
+            initScrollAnimations();
+        }
+
 
