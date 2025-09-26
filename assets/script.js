@@ -94,9 +94,12 @@ function joinWaitlist() {
         // Auto-slide mockup images on hover and modal gallery
         function initMockupSliders() {
             const items = document.querySelectorAll('.mockup-item[data-images]');
-            const intervalMs = 1800; // Shortened from 2600ms to 1800ms
+            const intervalMs = 1500; // 1.5 seconds for clean A→B→A→B cycling
             let globalTimer = null;
-            const itemStates = [];
+
+            // Make itemStates accessible globally for mobile scroll detection
+            window.mockupItemStates = window.mockupItemStates || [];
+            const itemStates = window.mockupItemStates;
 
             // Global function to advance all items simultaneously
             function advanceAllItems() {
@@ -107,96 +110,28 @@ function joinWaitlist() {
                 });
             }
 
-            // Check if mobile device
-            const isMobile = () => window.innerWidth <= 768;
-
-            // Observe viewport to start/stop global timer (desktop only)
+            // Simple observer to start/stop auto-transitions when items are visible
             const observer = new IntersectionObserver((entries) => {
                 const anyVisible = entries.some(entry => entry.isIntersecting);
 
-                // Only use auto-transitions on desktop
-                if (!isMobile()) {
-                    if (anyVisible && !globalTimer) {
-                        globalTimer = setInterval(advanceAllItems, intervalMs);
-                    } else if (!anyVisible && globalTimer) {
-                        clearInterval(globalTimer);
-                        globalTimer = null;
-                    }
-                } else {
-                    // Clear any existing timer on mobile
-                    if (globalTimer) {
-                        clearInterval(globalTimer);
-                        globalTimer = null;
-                    }
+                if (anyVisible && !globalTimer) {
+                    globalTimer = setInterval(advanceAllItems, intervalMs);
+                } else if (!anyVisible && globalTimer) {
+                    clearInterval(globalTimer);
+                    globalTimer = null;
                 }
             }, { threshold: 0.2 });
 
-            // Track which items have already triggered on mobile
-            const mobileTriggeredItems = new Set();
-
-            // Mobile scroll-based observer for individual items
-            const mobileObserver = new IntersectionObserver((entries) => {
-                if (!isMobile()) return;
-
-                entries.forEach(entry => {
-                    const item = entry.target;
-                    const itemId = item.dataset.itemId || `item-${Array.from(items).indexOf(item)}`;
-
-                    if (entry.isIntersecting && !mobileTriggeredItems.has(itemId)) {
-                        // Mark this item as triggered
-                        mobileTriggeredItems.add(itemId);
-
-                        // Find the corresponding item state and advance it
-                        const itemIndex = Array.from(items).indexOf(item);
-                        if (itemStates[itemIndex] && itemStates[itemIndex].nextImage) {
-                            // Small delay to make transition more noticeable
-                            setTimeout(() => {
-                                itemStates[itemIndex].nextImage();
-                            }, 400);
-                        }
-                    }
-
-                    // Reset trigger when item leaves viewport completely
-                    if (!entry.isIntersecting && entry.boundingClientRect.bottom < 0) {
-                        mobileTriggeredItems.delete(itemId);
-                    }
-                });
-            }, {
-                threshold: 0.5, // Trigger when 50% of the item is visible
-                rootMargin: '0px 0px -100px 0px' // More conservative offset
-            });
-
-            // Handle window resize to adjust behavior between mobile/desktop
-            let resizeTimeout;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    // Clear existing timer when switching between mobile/desktop
-                    if (globalTimer) {
-                        clearInterval(globalTimer);
-                        globalTimer = null;
-                    }
-
-                    // Restart appropriate behavior based on new screen size
-                    const anyVisible = Array.from(items).some(item => {
-                        const rect = item.getBoundingClientRect();
-                        return rect.top < window.innerHeight && rect.bottom > 0;
-                    });
-
-                    if (anyVisible && !isMobile()) {
-                        globalTimer = setInterval(advanceAllItems, intervalMs);
-                    }
-                }, 250);
-            });
-
             items.forEach((item, idx) => {
-                // Add unique ID for mobile tracking
-                item.dataset.itemId = `mockup-item-${idx}`;
-
                 const imgEl = item.querySelector('.mockup-image img');
+                const imageWrap = item.querySelector('.mockup-image');
+
+                // Get the list of images first
+                const list = item.getAttribute('data-images').split(',').map(s => s.trim()).filter(Boolean);
+                if (!imgEl || list.length < 2) return;
+
                 const blurEl = document.createElement('div');
                 blurEl.className = 'mockup-blur';
-                const imageWrap = item.querySelector('.mockup-image');
 
                 // Create preview element for next image foreshadowing
                 const previewEl = document.createElement('div');
@@ -236,11 +171,14 @@ function joinWaitlist() {
                     imageWrap.appendChild(indicatorsContainer);
                 }
 
-                const list = item.getAttribute('data-images').split(',').map(s => s.trim()).filter(Boolean);
-                if (!imgEl || list.length < 2) return;
-
+                // Always start at index 0 - ensures clean A→B→A→B cycle
                 let index = 0;
                 function renderBlur(src) { if (blurEl) blurEl.style.backgroundImage = `url('${src}')`; }
+
+                console.log(`Item ${idx}: Starting with "${list[0]}" (idx 0), will cycle: ${list.join(' -> ')}`);
+
+                // Ensure we start with the first image
+                imgEl.src = list[0];
 
                 // Update preview image
                 function updatePreview() {
@@ -269,60 +207,39 @@ function joinWaitlist() {
                 });
 
                 function nextImage() {
+                    // Simple alternating pattern for 2 images: 0→1→0→1
                     const nextIdx = (index + 1) % list.length;
                     const nextSrc = list[nextIdx];
 
-                    // Create next image element for smooth slide-in
-                    const nextImgEl = document.createElement('img');
-                    nextImgEl.style.cssText = `
-                        max-width: 100%;
-                        max-height: 100%;
-                        object-fit: contain;
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%) translateX(100%);
-                        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-                        z-index: 2;
-                        opacity: 1;
-                    `;
+                    console.log(`Item ${idx}: Fading to "${nextSrc}" (idx ${nextIdx})`);
 
-                    nextImgEl.onload = () => {
-                        // Add next image to container
-                        imageWrap.appendChild(nextImgEl);
+                    // Preload the next image first
+                    const preloadImg = new Image();
+                    preloadImg.onload = () => {
+                        // Once loaded, start the fade transition
+                        imgEl.style.transition = 'opacity 1.3s ease-in-out';
+                        imgEl.style.opacity = '0.3';
 
-                        // Start slide animations with better timing
-                        requestAnimationFrame(() => {
-                            requestAnimationFrame(() => {
-                                // Current image slides out to the left
-                                imgEl.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
-                                imgEl.style.transform = 'translate(-50%, -50%) translateX(-100%)';
-                                // Next image slides in from the right
-                                nextImgEl.style.transform = 'translate(-50%, -50%) translateX(0)';
-                            });
-                        });
-
-                        // After animation completes, clean up
+                        // After half fade, change source and fade back in
                         setTimeout(() => {
-                            // Replace the main image
-                            imgEl.src = nextSrc;
-                            imgEl.style.transition = '';
-                            imgEl.style.transform = 'translate(-50%, -50%)';
-
-                            // Remove the temporary next image
-                            if (nextImgEl.parentNode) {
-                                nextImgEl.parentNode.removeChild(nextImgEl);
-                            }
-
-                            renderBlur(nextSrc);
                             index = nextIdx;
+                            imgEl.src = nextSrc;
+                            imgEl.style.opacity = '1';
+
+                            // Update UI elements
+                            renderBlur(nextSrc);
                             updatePreview();
                             updateIndicators();
-                        }, 500); // Match transition duration
+
+                            console.log(`Item ${idx}: Now showing "${list[index]}" (idx ${index})`);
+                        }, 650); // Half of transition time
                     };
 
-                    // Start loading next image
-                    nextImgEl.src = nextSrc;
+                    preloadImg.onerror = () => {
+                        console.error(`Item ${idx}: Failed to load image: ${nextSrc}`);
+                    };
+
+                    preloadImg.src = nextSrc;
                 }
 
                 // store state for global timer
@@ -336,9 +253,6 @@ function joinWaitlist() {
 
                 // observe each item for visibility
                 observer.observe(item);
-
-                // Also observe with mobile observer for scroll-based transitions
-                mobileObserver.observe(item);
 
                 // click to open modal gallery
                 item.addEventListener('click', () => openGallery(item));
@@ -388,6 +302,10 @@ function joinWaitlist() {
 
             function closeGallery() {
                 overlay.classList.remove('open');
+                // Remove focus from modal buttons before hiding
+                if (document.activeElement && overlay.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
                 overlay.setAttribute('aria-hidden','true');
                 document.body.style.overflow = '';
             }
@@ -440,7 +358,7 @@ function joinWaitlist() {
             const afterImage = document.querySelector('.after-image');
 
             if (!slider || !sliderControl || !beforeImage || !afterImage) {
-                console.warn('Before/after slider elements not found');
+                // Silently return if before/after slider not present on this page
                 return;
             }
 
