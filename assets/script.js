@@ -94,7 +94,7 @@ function joinWaitlist() {
         // Auto-slide mockup images on hover and modal gallery
         function initMockupSliders() {
             const items = document.querySelectorAll('.mockup-item[data-images]');
-            const intervalMs = 2600;
+            const intervalMs = 1800; // Shortened from 2600ms to 1800ms
             let globalTimer = null;
             const itemStates = [];
 
@@ -107,25 +107,133 @@ function joinWaitlist() {
                 });
             }
 
-            // Observe viewport to start/stop global timer
+            // Check if mobile device
+            const isMobile = () => window.innerWidth <= 768;
+
+            // Observe viewport to start/stop global timer (desktop only)
             const observer = new IntersectionObserver((entries) => {
                 const anyVisible = entries.some(entry => entry.isIntersecting);
 
-                if (anyVisible && !globalTimer) {
-                    globalTimer = setInterval(advanceAllItems, intervalMs);
-                } else if (!anyVisible && globalTimer) {
-                    clearInterval(globalTimer);
-                    globalTimer = null;
+                // Only use auto-transitions on desktop
+                if (!isMobile()) {
+                    if (anyVisible && !globalTimer) {
+                        globalTimer = setInterval(advanceAllItems, intervalMs);
+                    } else if (!anyVisible && globalTimer) {
+                        clearInterval(globalTimer);
+                        globalTimer = null;
+                    }
+                } else {
+                    // Clear any existing timer on mobile
+                    if (globalTimer) {
+                        clearInterval(globalTimer);
+                        globalTimer = null;
+                    }
                 }
             }, { threshold: 0.2 });
 
+            // Track which items have already triggered on mobile
+            const mobileTriggeredItems = new Set();
+
+            // Mobile scroll-based observer for individual items
+            const mobileObserver = new IntersectionObserver((entries) => {
+                if (!isMobile()) return;
+
+                entries.forEach(entry => {
+                    const item = entry.target;
+                    const itemId = item.dataset.itemId || `item-${Array.from(items).indexOf(item)}`;
+
+                    if (entry.isIntersecting && !mobileTriggeredItems.has(itemId)) {
+                        // Mark this item as triggered
+                        mobileTriggeredItems.add(itemId);
+
+                        // Find the corresponding item state and advance it
+                        const itemIndex = Array.from(items).indexOf(item);
+                        if (itemStates[itemIndex] && itemStates[itemIndex].nextImage) {
+                            // Small delay to make transition more noticeable
+                            setTimeout(() => {
+                                itemStates[itemIndex].nextImage();
+                            }, 400);
+                        }
+                    }
+
+                    // Reset trigger when item leaves viewport completely
+                    if (!entry.isIntersecting && entry.boundingClientRect.bottom < 0) {
+                        mobileTriggeredItems.delete(itemId);
+                    }
+                });
+            }, {
+                threshold: 0.5, // Trigger when 50% of the item is visible
+                rootMargin: '0px 0px -100px 0px' // More conservative offset
+            });
+
+            // Handle window resize to adjust behavior between mobile/desktop
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    // Clear existing timer when switching between mobile/desktop
+                    if (globalTimer) {
+                        clearInterval(globalTimer);
+                        globalTimer = null;
+                    }
+
+                    // Restart appropriate behavior based on new screen size
+                    const anyVisible = Array.from(items).some(item => {
+                        const rect = item.getBoundingClientRect();
+                        return rect.top < window.innerHeight && rect.bottom > 0;
+                    });
+
+                    if (anyVisible && !isMobile()) {
+                        globalTimer = setInterval(advanceAllItems, intervalMs);
+                    }
+                }, 250);
+            });
+
             items.forEach((item, idx) => {
+                // Add unique ID for mobile tracking
+                item.dataset.itemId = `mockup-item-${idx}`;
+
                 const imgEl = item.querySelector('.mockup-image img');
                 const blurEl = document.createElement('div');
                 blurEl.className = 'mockup-blur';
                 const imageWrap = item.querySelector('.mockup-image');
+
+                // Create preview element for next image foreshadowing
+                const previewEl = document.createElement('div');
+                previewEl.className = 'next-image-preview';
+                previewEl.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    right: 5px;
+                    width: 25px;
+                    height: 60px;
+                    background-size: cover;
+                    background-position: center;
+                    transform: translateY(-50%);
+                    opacity: 0;
+                    transition: opacity 0.4s ease;
+                    border-radius: 6px;
+                    z-index: 2;
+                    filter: blur(1px);
+                `;
+
                 if (imageWrap && !imageWrap.querySelector('.mockup-blur')) {
                     imageWrap.prepend(blurEl);
+                    imageWrap.appendChild(previewEl);
+
+                    // Add slider indicators for mobile
+                    const indicatorsContainer = document.createElement('div');
+                    indicatorsContainer.className = 'slider-indicators';
+
+                    // Create dots based on number of images
+                    for (let i = 0; i < list.length; i++) {
+                        const dot = document.createElement('div');
+                        dot.className = 'slider-dot';
+                        if (i === 0) dot.classList.add('active');
+                        indicatorsContainer.appendChild(dot);
+                    }
+
+                    imageWrap.appendChild(indicatorsContainer);
                 }
 
                 const list = item.getAttribute('data-images').split(',').map(s => s.trim()).filter(Boolean);
@@ -134,35 +242,103 @@ function joinWaitlist() {
                 let index = 0;
                 function renderBlur(src) { if (blurEl) blurEl.style.backgroundImage = `url('${src}')`; }
 
+                // Update preview image
+                function updatePreview() {
+                    const nextIdx = (index + 1) % list.length;
+                    const nextSrc = list[nextIdx];
+                    if (previewEl) {
+                        previewEl.style.backgroundImage = `url('${nextSrc}')`;
+                    }
+                }
+
+                // Update slider indicators
+                function updateIndicators() {
+                    const indicators = imageWrap.querySelectorAll('.slider-dot');
+                    indicators.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === index);
+                    });
+                }
+
+                // Show preview on hover
+                item.addEventListener('mouseenter', () => {
+                    if (previewEl) previewEl.style.opacity = '0.15';
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    if (previewEl) previewEl.style.opacity = '0';
+                });
+
                 function nextImage() {
                     const nextIdx = (index + 1) % list.length;
                     const nextSrc = list[nextIdx];
-                    imgEl.classList.remove('slide-enter','slide-enter-active');
-                    imgEl.classList.add('slide-exit');
-                    requestAnimationFrame(() => {
-                        imgEl.classList.add('slide-exit-active');
-                    });
-                    setTimeout(() => {
-                        imgEl.src = nextSrc;
-                        renderBlur(nextSrc);
-                        imgEl.classList.remove('slide-exit','slide-exit-active');
-                        imgEl.classList.add('slide-enter');
+
+                    // Create next image element for smooth slide-in
+                    const nextImgEl = document.createElement('img');
+                    nextImgEl.style.cssText = `
+                        max-width: 100%;
+                        max-height: 100%;
+                        object-fit: contain;
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%) translateX(100%);
+                        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+                        z-index: 2;
+                        opacity: 1;
+                    `;
+
+                    nextImgEl.onload = () => {
+                        // Add next image to container
+                        imageWrap.appendChild(nextImgEl);
+
+                        // Start slide animations with better timing
                         requestAnimationFrame(() => {
-                            imgEl.classList.add('slide-enter-active');
+                            requestAnimationFrame(() => {
+                                // Current image slides out to the left
+                                imgEl.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+                                imgEl.style.transform = 'translate(-50%, -50%) translateX(-100%)';
+                                // Next image slides in from the right
+                                nextImgEl.style.transform = 'translate(-50%, -50%) translateX(0)';
+                            });
                         });
-                        index = nextIdx;
-                    }, 250);
+
+                        // After animation completes, clean up
+                        setTimeout(() => {
+                            // Replace the main image
+                            imgEl.src = nextSrc;
+                            imgEl.style.transition = '';
+                            imgEl.style.transform = 'translate(-50%, -50%)';
+
+                            // Remove the temporary next image
+                            if (nextImgEl.parentNode) {
+                                nextImgEl.parentNode.removeChild(nextImgEl);
+                            }
+
+                            renderBlur(nextSrc);
+                            index = nextIdx;
+                            updatePreview();
+                            updateIndicators();
+                        }, 500); // Match transition duration
+                    };
+
+                    // Start loading next image
+                    nextImgEl.src = nextSrc;
                 }
 
                 // store state for global timer
                 const state = { nextImage };
                 itemStates.push(state);
 
-                // initial blur background
+                // initial blur background, preview, and indicators
                 renderBlur(imgEl.src);
+                updatePreview();
+                updateIndicators();
 
                 // observe each item for visibility
                 observer.observe(item);
+
+                // Also observe with mobile observer for scroll-based transitions
+                mobileObserver.observe(item);
 
                 // click to open modal gallery
                 item.addEventListener('click', () => openGallery(item));
