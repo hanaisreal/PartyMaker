@@ -298,6 +298,25 @@ body {
     transform: translateY(-1px);
 }
 
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.nav-link {
+    color: var(--text-medium);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--text-dark);
+}
+
 /* Modern Hero Section */
 .hero {
     min-height: 100vh;
@@ -1569,6 +1588,14 @@ body {
         height: 50vh;
         min-height: 300px;
         padding: 20px;
+    }
+
+    .nav-links {
+        gap: 20px;
+    }
+
+    .nav-link {
+        font-size: 13px;
     }
 
     .nav-cta {
